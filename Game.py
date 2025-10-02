@@ -19,11 +19,11 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Jeu d'esquive d'obstacles 2D")
 
 # Couleurs
-GREEN = (34, 139, 34)
-GRAY = (120, 120, 120)
+GREEN = (55, 155, 55)
+GRAY = (128, 128, 128)
 WHITE = (255, 255, 255)
-RED = (200, 0, 0)
-OBSTACLE_COLORS = [(0,0,0), (0,120,215), (255,140,0), (128,0,128)]
+RED = (255, 0, 0)
+OBSTACLE_COLORS = [(0,0,0), (0,115,215), (255,155,0), (128,0,128)]
 
 
 
