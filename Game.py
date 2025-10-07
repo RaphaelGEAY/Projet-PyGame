@@ -1,336 +1,202 @@
-
-
-
-import pygame
-import sys
-import random
+import pygame, sys, random
 from Vehicules.Fourgon import Fourgon
 from Vehicules.VoitureDeBase import VoitureDeBase
 from Vehicules.VoitureDeCourse import VoitureDeCourse
 from Vehicules.Moto import Moto
 from Vehicules.Velo import Velo
 
+class Game:
+	def __init__(self):
+		pygame.init()
+		self.WIDTH, self.HEIGHT = 800, 600
+		self.screen = pygame.display.set_mode((self.WIDTH, self.HEIGHT))
+		pygame.display.set_caption("Jeu d'esquive d'obstacles 2D")
 
-# Dimensions de la fenêtre
-WIDTH, HEIGHT = 800, 600
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Jeu d'esquive d'obstacles 2D")
+		self.GREEN = (34, 139, 34)
+		self.GRAY = (120, 120, 120)
+		self.WHITE = (255, 255, 255)
+		self.RED = (200, 0, 0)
+		self.OBSTACLE_COLORS = [(0,0,0), (0,120,215), (255,140,0), (128,0,128)]
 
-# Couleurs
-GREEN = (34, 139, 34)
-GRAY = (120, 120, 120)
-WHITE = (255, 255, 255)
-RED = (200, 0, 0)
-OBSTACLE_COLORS = [(0,0,0), (0,120,215), (255,140,0), (128,0,128)]
+		self.vehicules = [VoitureDeBase(), VoitureDeCourse(), Fourgon(), Moto(), Velo()]
+		self.vehicule_names = ["Voiture de base", "Voiture de course", "Fourgon", "Moto", "Vélo"]
+		self.vehicule_index = 0
+		self.vehicule = self.vehicules[self.vehicule_index]
 
+		self.car_width, self.car_height = 40, 60
+		self.car_x = self.WIDTH // 2 - self.car_width // 2
+		self.car_y = self.HEIGHT - self.car_height - 30
+		self.car_vel = 0
+		self.car_friction = 0.15
+		self.boost_obstacle_speed = 4
+		self.road_width = 300
+		self.road_x = self.WIDTH // 2 - self.road_width // 2
 
+		self.obstacles = []
+		self.obstacle_timer = 0
+		self.obstacle_interval = 40
+		self.obstacle_base_speed = 7
 
-# Liste des véhicules disponibles
-vehicules = [VoitureDeBase(), VoitureDeCourse(), Fourgon(), Moto(), Velo()]
-vehicule_names = ["Voiture de base", "Voiture de course", "Fourgon", "Moto", "Vélo"]
-vehicule_index = 0
-vehicule = vehicules[vehicule_index]
+		self.clock = pygame.time.Clock()
+		self.font = pygame.font.SysFont(None, 48)
+		self.score_font = pygame.font.SysFont(None, 36)
+		self.game_over = False
+		self.score = 0
+		self.line_offset = 0
+		self.global_vertical_speed = self.obstacle_base_speed
+		self.boost_offset = 0
 
+	def spawn_obstacle(self):
+		obs_width = random.randint(30, 70)
+		obs_height = random.randint(30, 60)
+		obs_x = random.randint(self.road_x, self.road_x + self.road_width - obs_width)
+		obs_y = -obs_height
+		color = random.choice(self.OBSTACLE_COLORS)
+		zigzag = random.random() < 0.3
+		zigzag_speed = random.choice([-2, 2]) if zigzag else 0
+		self.obstacles.append({
+			"rect": pygame.Rect(obs_x, obs_y, obs_width, obs_height),
+			"color": color,
+			"zigzag": zigzag,
+			"zigzag_speed": zigzag_speed
+		})
 
-car_width, car_height = 40, 60
-car_x = WIDTH // 2 - car_width // 2
-car_y = HEIGHT - car_height - 30
-car_vel = 0
-car_friction = 0.15
+	def restart(self):
+		self.car_x = self.WIDTH // 2 - self.car_width // 2
+		self.car_vel = 0
+		self.obstacles = []
+		self.obstacle_timer = 0
+		self.score = 0
+		self.game_over = False
 
-# Boost
-boost_obstacle_speed = 4
+	def run(self):
+		while True:
+			events = pygame.event.get()
+			restart_rect = None
+			keys = pygame.key.get_pressed()
 
-# Route
-road_width = 300
-road_x = WIDTH // 2 - road_width // 2
-
-
-# Obstacles
-obstacles = []
-obstacle_timer = 0
-obstacle_interval = 40  # frames
-obstacle_base_speed = 7
-
-
-
-clock = pygame.time.Clock()
-font = pygame.font.SysFont(None, 48)
-score_font = pygame.font.SysFont(None, 36)
-game_over = False
-score = 0
-
-# Animation des lignes blanches
-line_offset = 0
-line_speed = 8
-# Vitesse verticale globale (utilisée partout)
-global_vertical_speed = obstacle_base_speed
-
-# Décalage vertical de la voiture lors du boost
-boost_offset = 0
-
-def spawn_obstacle():
-    obs_width = random.randint(30, 70)
-    obs_height = random.randint(30, 60)
-    obs_x = random.randint(road_x, road_x + road_width - obs_width)
-    obs_y = -obs_height
-    color = random.choice(OBSTACLE_COLORS)
-    # 30% des obstacles zigzaguent
-    zigzag = random.random() < 0.3
-    zigzag_speed = random.choice([-2, 2]) if zigzag else 0
-    obstacles.append({
-        "rect": pygame.Rect(obs_x, obs_y, obs_width, obs_height),
-        "color": color,
-        "zigzag": zigzag,
-        "zigzag_speed": zigzag_speed
-    })
-
-def game():
-	while True:
-
-		# Gestion des événements (une seule fois par frame)
-		events = pygame.event.get()
-		restart_rect = None
-		keys = pygame.key.get_pressed()
-		for event in events:
-			if event.type == pygame.QUIT:
-				pygame.quit()
-				sys.exit()
-			if not game_over and event.type == pygame.KEYDOWN:
-				if event.key == pygame.K_TAB:
-					vehicule_index = (vehicule_index + 1) % len(vehicules)
-					vehicule = vehicules[vehicule_index]
-					car_x = WIDTH // 2 - car_width // 2
-					car_vel = 0
-
-		# Effet boost : déplacement vers l'avant
-		max_boost_offset = 60
-		boost_up_speed = 4
-		boost_down_speed = 3
-		if not game_over:
-			if keys[pygame.K_SPACE]:
-				if boost_offset < max_boost_offset:
-					boost_offset += boost_up_speed
-			else:
-				if boost_offset > 0:
-					boost_offset -= boost_down_speed
-
-		if not game_over:
-			min_road_width = 120
-			road_width = max(min_road_width, 300 - score // 100)
-			road_x = WIDTH // 2 - road_width // 2
-
-			if keys[pygame.K_LEFT]:
-				car_x -= vehicule.deplacement_h()
-			if keys[pygame.K_RIGHT]:
-				car_x += vehicule.deplacement_h()
-
-			if car_x < road_x:
-				car_x = road_x
-				car_vel = 0
-			if car_x + car_width > road_x + road_width:
-				car_x = road_x + road_width - car_width
-				car_vel = 0
-
-			obstacle_timer += 1
-			if obstacle_timer >= obstacle_interval:
-				spawn_obstacle()
-				obstacle_timer = 0
-
-			if keys[pygame.K_SPACE]:
-				global_vertical_speed = obstacle_base_speed + score // 120 + vehicule.boost()
-			else:
-				global_vertical_speed = obstacle_base_speed + score // 120
-
-			for obs in obstacles:
-				obs["rect"].y += global_vertical_speed
-				if obs["zigzag"]:
-					obs["rect"].x += obs["zigzag_speed"]
-					if obs["rect"].x < road_x:
-						obs["rect"].x = road_x
-						obs["zigzag_speed"] *= -1
-					if obs["rect"].x + obs["rect"].width > road_x + road_width:
-						obs["rect"].x = road_x + road_width - obs["rect"].width
-						obs["zigzag_speed"] *= -1
-
-			car_rect = pygame.Rect(car_x, car_y, car_width, car_height)
-			for obs in obstacles:
-				if car_rect.colliderect(obs["rect"]):
-					game_over = True
-
-			obstacles = [obs for obs in obstacles if obs["rect"].y < HEIGHT]
-
-			score += 1
-
-		screen.fill(GREEN)
-		pygame.draw.rect(screen, GRAY, (road_x, 0, road_width, HEIGHT))
-
-		side_line_width = 8
-		pygame.draw.rect(screen, WHITE, (road_x + 18, 0, side_line_width, HEIGHT))
-		pygame.draw.rect(screen, WHITE, (road_x + road_width - 18 - side_line_width, 0, side_line_width, HEIGHT))
-
-		if not game_over:
-			line_offset = (line_offset + global_vertical_speed) % 40
-		for i in range(-40, HEIGHT, 40):
-			pygame.draw.rect(screen, WHITE, (WIDTH // 2 - 5, i + line_offset, 10, 30))
-
-		for obs in obstacles:
-			pygame.draw.rect(screen, obs["color"], obs["rect"])
-
-		car_y_boosted = car_y - boost_offset
-		pygame.draw.rect(screen, RED, (car_x, car_y_boosted, car_width, car_height))
-
-		change_rect = pygame.Rect(WIDTH - 180, 20, 160, 40)
-		pygame.draw.rect(screen, (0, 120, 215), change_rect)
-		change_font = pygame.font.SysFont(None, 28)
-		change_text = change_font.render("Changer véhicule", True, WHITE)
-		screen.blit(change_text, change_text.get_rect(center=change_rect.center))
-
-		name_font = pygame.font.SysFont(None, 28)
-		name_text = name_font.render(f"Véhicule : {vehicule_names[vehicule_index]}", True, (0, 0, 0))
-		screen.blit(name_text, (20, 60))
-
-		score_text = score_font.render(f"Score : {score}", True, (0, 0, 0))
-		screen.blit(score_text, (20, 20))
-
-		if game_over:
-			text = font.render("Game Over!", True, (255, 0, 0))
-			text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 40))
-			screen.blit(text, text_rect)
-
-			restart_font = pygame.font.SysFont(None, 40)
-			restart_text = restart_font.render("Restart", True, WHITE)
-			restart_rect = pygame.Rect(WIDTH // 2 - 70, HEIGHT // 2 + 10, 140, 50)
-			pygame.draw.rect(screen, (0, 120, 215), restart_rect)
-			screen.blit(restart_text, restart_text.get_rect(center=restart_rect.center))
-
-		pygame.display.flip()
-		clock.tick(60)
-
-		if game_over and restart_rect is not None:
 			for event in events:
-				if event.type == pygame.MOUSEBUTTONDOWN:
-					if restart_rect.collidepoint(event.pos):
-						car_x = WIDTH // 2 - car_width // 2
-						car_vel = 0
-						obstacles = []
-						obstacle_timer = 0
-						score = 0
-						game_over = False
+				if event.type == pygame.QUIT:
+					pygame.quit()
+					sys.exit()
+				if not self.game_over and event.type == pygame.KEYDOWN:
+					if event.key == pygame.K_TAB:
+						self.vehicule_index = (self.vehicule_index + 1) % len(self.vehicules)
+						self.vehicule = self.vehicules[self.vehicule_index]
+						self.car_x = self.WIDTH // 2 - self.car_width // 2
+						self.car_vel = 0
 
-		for event in events:
-			if event.type == pygame.MOUSEBUTTONDOWN:
-				if change_rect.collidepoint(event.pos):
-					vehicule_index = (vehicule_index + 1) % len(vehicules)
-					vehicule = vehicules[vehicule_index]
-					car_x = WIDTH // 2 - car_width // 2
-					car_vel = 0
+			max_boost_offset = 60
+			boost_up_speed = 4
+			boost_down_speed = 3
+			if not self.game_over:
+				if keys[pygame.K_SPACE]:
+					if self.boost_offset < max_boost_offset:
+						self.boost_offset += boost_up_speed
+				else:
+					if self.boost_offset > 0:
+						self.boost_offset -= boost_down_speed
 
+			if not self.game_over:
+				min_road_width = 120
+				self.road_width = max(min_road_width, 300 - self.score // 100)
+				self.road_x = self.WIDTH // 2 - self.road_width // 2
 
-# Initialisation de Pygame
-pygame.init()
+				if keys[pygame.K_LEFT]:
+					self.car_x -= self.vehicule.deplacement_h()
+				if keys[pygame.K_RIGHT]:
+					self.car_x += self.vehicule.deplacement_h()
 
-WIDTH, HEIGHT = 1200, 630
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Game Menu Example")
+				if self.car_x < self.road_x:
+					self.car_x = self.road_x
+				if self.car_x + self.car_width > self.road_x + self.road_width:
+					self.car_x = self.road_x + self.road_width - self.car_width
 
-background = pygame.image.load("Menus/Fond_menu.png")
-background = pygame.transform.scale(background, (WIDTH, HEIGHT))
+				self.obstacle_timer += 1
+				if self.obstacle_timer >= self.obstacle_interval:
+					self.spawn_obstacle()
+					self.obstacle_timer = 0
 
-shop_background = pygame.image.load("Menus/Shop_menu.png")  
-shop_background = pygame.transform.scale(shop_background, (WIDTH, HEIGHT))
+				if keys[pygame.K_SPACE]:
+					self.global_vertical_speed = self.obstacle_base_speed + self.score // 120 + self.vehicule.boost()
+				else:
+					self.global_vertical_speed = self.obstacle_base_speed + self.score // 120
 
-title_image = pygame.image.load("Menus/SPEED_RUN.png")
-title_rect = title_image.get_rect(center=(WIDTH / 2, 70))
+				for obs in self.obstacles:
+					obs["rect"].y += self.global_vertical_speed
+					if obs["zigzag"]:
+						obs["rect"].x += obs["zigzag_speed"]
+						if obs["rect"].x < self.road_x:
+							obs["rect"].x = self.road_x
+							obs["zigzag_speed"] *= -1
+						if obs["rect"].x + obs["rect"].width > self.road_x + self.road_width:
+							obs["rect"].x = self.road_x + self.road_width - obs["rect"].width
+							obs["zigzag_speed"] *= -1
 
-start_img = pygame.image.load("Menus/START.png").convert_alpha()
-shop_img = pygame.image.load("Menus/SHOP.png").convert_alpha()
-quit_img = pygame.image.load("Menus/QUIT.png").convert_alpha()
-settings_img = pygame.image.load("Menus/Settings.png").convert_alpha()
+				car_rect = pygame.Rect(self.car_x, self.car_y, self.car_width, self.car_height)
+				for obs in self.obstacles:
+					if car_rect.colliderect(obs["rect"]):
+						self.game_over = True
 
-start_size = (260, 190)
-quit_size = (260, 200)
-shop_size = (270, 250)
-settings_size = (180, 180)
+				self.obstacles = [obs for obs in self.obstacles if obs["rect"].y < self.HEIGHT]
+				self.score += 1
 
-start_img = pygame.transform.scale(start_img, start_size)
-quit_img = pygame.transform.scale(quit_img, quit_size)
-shop_img = pygame.transform.scale(shop_img, shop_size)
-settings_img = pygame.transform.scale(settings_img, settings_size)
+			self.screen.fill(self.GREEN)
+			pygame.draw.rect(self.screen, self.GRAY, (self.road_x, 0, self.road_width, self.HEIGHT))
 
-start_rect = start_img.get_rect(center=(WIDTH // 2, 250))
-shop_rect = shop_img.get_rect(center=(WIDTH // 2, 405))
-quit_rect = quit_img.get_rect(center=(WIDTH // 2, 560))
-settings_rect = settings_img.get_rect(center=(WIDTH - 120, 500))
+			side_line_width = 8
+			pygame.draw.rect(self.screen, self.WHITE, (self.road_x + 18, 0, side_line_width, self.HEIGHT))
+			pygame.draw.rect(self.screen, self.WHITE, (self.road_x + self.road_width - 18 - side_line_width, 0, side_line_width, self.HEIGHT))
 
-font = pygame.font.Font(None, 100)
+			if not self.game_over:
+				self.line_offset = (self.line_offset + self.global_vertical_speed) % 40
+			for i in range(-40, self.HEIGHT, 40):
+				pygame.draw.rect(self.screen, self.WHITE, (self.WIDTH // 2 - 5, i + self.line_offset, 10, 30))
 
-def start_game():
+			for obs in self.obstacles:
+				pygame.draw.rect(self.screen, obs["color"], obs["rect"])
 
-    print("Game Started!")
+			car_y_boosted = self.car_y - self.boost_offset
+			pygame.draw.rect(self.screen, self.RED, (self.car_x, car_y_boosted, self.car_width, self.car_height))
 
-def quit_game():
-    pygame.quit()
-    sys.exit()
+			change_rect = pygame.Rect(self.WIDTH - 180, 20, 160, 40)
+			pygame.draw.rect(self.screen, (0, 120, 215), change_rect)
+			change_font = pygame.font.SysFont(None, 28)
+			change_text = change_font.render("Changer véhicule", True, self.WHITE)
+			self.screen.blit(change_text, change_text.get_rect(center=change_rect.center))
 
-def settings_game():
-    print("You clicked on Settings")
+			name_font = pygame.font.SysFont(None, 28)
+			name_text = name_font.render(f"Véhicule : {self.vehicule_names[self.vehicule_index]}", True, (0, 0, 0))
+			self.screen.blit(name_text, (20, 60))
 
-def draw_pop_button(image, base_size, rect, scale_factor=1.2, action=None):
-    mouse = pygame.mouse.get_pos()
-    click = pygame.mouse.get_pressed()
+			score_text = self.score_font.render(f"Score : {self.score}", True, (0, 0, 0))
+			self.screen.blit(score_text, (20, 20))
 
-    if rect.collidepoint(mouse):
-        new_size = (int(base_size[0] * scale_factor), int(base_size[1] * scale_factor))
-        scaled_img = pygame.transform.scale(image, new_size)
-        new_rect = scaled_img.get_rect(center=rect.center)
-        screen.blit(scaled_img, new_rect)
+			if self.game_over:
+				text = self.font.render("Game Over!", True, (255, 0, 0))
+				text_rect = text.get_rect(center=(self.WIDTH // 2, self.HEIGHT // 2 - 40))
+				self.screen.blit(text, text_rect)
+				restart_font = pygame.font.SysFont(None, 40)
+				restart_text = restart_font.render("Restart", True, self.WHITE)
+				restart_rect = pygame.Rect(self.WIDTH // 2 - 70, self.HEIGHT // 2 + 10, 140, 50)
+				pygame.draw.rect(self.screen, (0, 120, 215), restart_rect)
+				self.screen.blit(restart_text, restart_text.get_rect(center=restart_rect.center))
 
-        if click[0] == 1 and action is not None:
-            pygame.time.wait(150)
-            action()
-    else:
-        screen.blit(image, rect)
+			pygame.display.flip()
+			self.clock.tick(60)
 
-def shop_menu():
-    while True:
-        screen.blit(shop_background, (0, 0))  
+			if self.game_over and restart_rect is not None:
+				for event in events:
+					if event.type == pygame.MOUSEBUTTONDOWN and restart_rect.collidepoint(event.pos):
+						self.restart()
 
-        shop_text = font.render( None, None, (255, 255, 255))
-        shop_rect_text = shop_text.get_rect(center=(WIDTH / 2, 100))
-        screen.blit(shop_text, shop_rect_text)
+			for event in events:
+				if event.type == pygame.MOUSEBUTTONDOWN and change_rect.collidepoint(event.pos):
+					self.vehicule_index = (self.vehicule_index + 1) % len(self.vehicules)
+					self.vehicule = self.vehicules[self.vehicule_index]
+					self.car_x = self.WIDTH // 2 - self.car_width // 2
+					self.car_vel = 0
 
-        back_font = pygame.font.Font(None, 60)
-        back_text = back_font.render("Back", True, (255, 255, 255))
-        back_rect = back_text.get_rect(center=(100, 50))
-        screen.blit(back_text, back_rect)
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                if back_rect.collidepoint(event.pos):
-                    main_menu() 
-
-        pygame.display.update()
-
-def main_menu():
-    while True:
-        screen.blit(background, (0, 0))
-        screen.blit(title_image, title_rect)
-
-        draw_pop_button(start_img, start_size, start_rect, 1.2, start_game)
-        draw_pop_button(shop_img, shop_size, shop_rect, 1.2, shop_menu) 
-        draw_pop_button(quit_img, quit_size, quit_rect, 1.2, quit_game)
-        draw_pop_button(settings_img, settings_size, settings_rect, 1.2, settings_game)
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-
-        pygame.display.update()
-
-
-main_menu()
+def run_game():
+	game = Game()
+	game.run()
