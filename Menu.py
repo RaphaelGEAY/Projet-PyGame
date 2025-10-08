@@ -72,7 +72,7 @@ def shop_menu():
 		pygame.display.update()
 
 def settings_game():
-	print("Settings menu (à compléter)")
+	print("Settings menu")
 
 def start_game():
 	Game.run_game()
