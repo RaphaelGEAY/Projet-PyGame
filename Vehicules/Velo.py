@@ -2,7 +2,7 @@ from Vehicules.Vehicule import Vehicule
 
 class Velo(Vehicule):
 	def __init__(self):
-		super().__init__(vitesseH=3, vitesseV=2, multiplicateur=0.9)
+		super().__init__(vitesseH=5, vitesseV=1, multiplicateur=0.8)
 
 	def deplacement_h(self):
 		return self.vitesseH * self.multiplicateur
