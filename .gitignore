@@ -1,0 +1,27 @@
+# Dossiers Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environnements virtuels
+env/
+venv/
+.venv/
+
+# Visual Studio Code
+.vscode/
+
+# Fichiers de logs
+*.log
+
+# Fichiers temporaires / système
+*.tmp
+*.swp
+.DS_Store
+Thumbs.db
+
+# Dossiers spécifiques
+Vehicules/__pycache__/
+
+# Fichiers de configuration sensibles
+*.env
