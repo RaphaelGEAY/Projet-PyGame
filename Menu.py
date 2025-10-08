@@ -3,7 +3,7 @@ import Game
 
 pygame.init()
 
-WIDTH, HEIGHT = 1200, 630
+WIDTH, HEIGHT = 1200, 700
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Speed Run Menu")
 
