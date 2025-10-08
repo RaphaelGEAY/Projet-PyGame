@@ -6,6 +6,8 @@ from Vehicules.Moto import Moto
 from Vehicules.Velo import Velo
 from Obstacles.Obstacle import Obstacle
 from Obstacles.VoitureBleue import VoitureBleue
+from Obstacles.VoitureNoire import VoitureNoire
+from Obstacles.VoitureOrange import VoitureOrange
 from Obstacles.BarrierePolice import BarrierePolice
 from Obstacles.Boost import Boost
 
@@ -28,7 +30,7 @@ class Game:
 		self.vehicule_index = 0
 		self.vehicule = self.vehicules[self.vehicule_index]
 
-		self.car_width, self.car_height = 50, 100
+		self.car_width, self.car_height = 20, 20
 		self.car_x = self.WIDTH // 2 - self.car_width // 2
 		self.car_y = self.HEIGHT - self.car_height - 30
 
@@ -74,7 +76,7 @@ class Game:
 	def spawn_obstacle(self):
 		type_obstacle = random.choices(
 			["barriere", "boost", "bleue", "noire", "orange"],
-			weights=[0.05, 0.08, 0.35, 0.35, 0.17],
+			weights=[0.01, 0.02, 0.05, 0.05, 0.001],
 			k=1
 		)[0]
 		if type_obstacle == "barriere":
@@ -82,8 +84,12 @@ class Game:
 			y = -150
 			obs = BarrierePolice(x, y)
 		elif type_obstacle == "boost":
-			x = random.randint(self.road_x, self.road_x + self.road_width - 100)
+			side = random.choice(["left", "right"])
 			y = -100
+			if side == "left":
+				x = self.road_x + 20   # position fixe côté gauche
+			else:
+				x = self.road_x + self.road_width - 120  # position fixe côté droit
 			obs = Boost(x, y)
 		elif type_obstacle == "bleue":
 			x = random.randint(self.road_x, self.road_x + self.road_width - 50)
@@ -92,11 +98,11 @@ class Game:
 		elif type_obstacle == "noire":
 			x = random.randint(self.road_x, self.road_x + self.road_width - 50)
 			y = -80
-			obs = VoitureBleue(x, y)
+			obs = VoitureNoire(x, y)
 		elif type_obstacle == "orange":
 			x = random.randint(self.road_x, self.road_x + self.road_width - 50)
 			y = -80
-			obs = Obstacle(x, y, 50, 80, (255, 140, 0))
+			obs = VoitureOrange(x, y)
 		self.obstacles.append(obs)
 
 	def restart(self):
