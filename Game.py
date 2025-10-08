@@ -1,12 +1,13 @@
-import pygame, sys, random
+import pygame, sys, random, os
 from Vehicules.Fourgon import Fourgon
 from Vehicules.VoitureDeBase import VoitureDeBase
 from Vehicules.VoitureDeCourse import VoitureDeCourse
 from Vehicules.Moto import Moto
 from Vehicules.Velo import Velo
 from Obstacles.Obstacle import Obstacle
-from Obstacles.VoitureBleue import VoitureRouge as VoitureBleue
-from Obstacles.BarrierePolice import VoitureRouge as BarrierePolice
+from Obstacles.VoitureBleue import VoitureBleue
+from Obstacles.BarrierePolice import BarrierePolice
+from Obstacles.Boost import Boost
 
 class Game:
 	def __init__(self, go_to_menu_callback=None):
@@ -27,17 +28,17 @@ class Game:
 		self.vehicule_index = 0
 		self.vehicule = self.vehicules[self.vehicule_index]
 
-		self.car_width, self.car_height = 40, 60
+		self.car_width, self.car_height = 50, 100
 		self.car_x = self.WIDTH // 2 - self.car_width // 2
 		self.car_y = self.HEIGHT - self.car_height - 30
 
-		self.road_width = 300
+		self.road_width = 380
 		self.road_x = self.WIDTH // 2 - self.road_width // 2
 
 		self.obstacles = []
 		self.obstacle_timer = 0
-		self.obstacle_interval = 40
-		self.obstacle_base_speed = 7
+		self.obstacle_interval = 15
+		self.obstacle_base_speed = 15  # beaucoup plus rapide dès le départ
 
 		self.clock = pygame.time.Clock()
 		self.font = pygame.font.SysFont(None, 48)
@@ -49,26 +50,53 @@ class Game:
 		self.line_offset = 0
 		self.global_vertical_speed = self.obstacle_base_speed
 		self.boost_offset = 0
+		self.highscore = self.load_highscore()
 
 		self.go_to_menu_callback = go_to_menu_callback
+		self.boost_boost_timer = 0
+
+	def load_highscore(self):
+		try:
+			if os.path.exists("highscore.txt"):
+				with open("highscore.txt", "r") as f:
+					return int(f.read().strip())
+		except:
+			pass
+		return 0
+
+	def save_highscore(self):
+		try:
+			with open("highscore.txt", "w") as f:
+				f.write(str(self.highscore))
+		except:
+			pass
 
 	def spawn_obstacle(self):
-		type_obstacle = random.choice(["bleue", "barriere", "simple"])
-		if type_obstacle == "bleue":
-			x = random.randint(self.road_x, self.road_x + self.road_width - 50)
-			y = -80
-			obs = VoitureBleue(x, y)
-		elif type_obstacle == "barriere":
+		type_obstacle = random.choices(
+			["barriere", "boost", "bleue", "noire", "orange"],
+			weights=[0.05, 0.08, 0.35, 0.35, 0.17],
+			k=1
+		)[0]
+		if type_obstacle == "barriere":
 			x = self.road_x + (self.road_width // 2) - 225
 			y = -150
 			obs = BarrierePolice(x, y)
-		else:
-			obs_width = random.randint(30, 70)
-			obs_height = random.randint(30, 60)
-			obs_x = random.randint(self.road_x, self.road_x + self.road_width - obs_width)
-			obs_y = -obs_height
-			color = random.choice([(0,0,0), (0,120,215), (255,140,0), (128,0,128)])
-			obs = Obstacle(obs_x, obs_y, obs_width, obs_height, color)
+		elif type_obstacle == "boost":
+			x = random.randint(self.road_x, self.road_x + self.road_width - 100)
+			y = -100
+			obs = Boost(x, y)
+		elif type_obstacle == "bleue":
+			x = random.randint(self.road_x, self.road_x + self.road_width - 50)
+			y = -80
+			obs = VoitureBleue(x, y)
+		elif type_obstacle == "noire":
+			x = random.randint(self.road_x, self.road_x + self.road_width - 50)
+			y = -80
+			obs = VoitureBleue(x, y)
+		elif type_obstacle == "orange":
+			x = random.randint(self.road_x, self.road_x + self.road_width - 50)
+			y = -80
+			obs = Obstacle(x, y, 50, 80, (255, 140, 0))
 		self.obstacles.append(obs)
 
 	def restart(self):
@@ -76,6 +104,7 @@ class Game:
 		self.obstacles = []
 		self.obstacle_timer = 0
 		self.score = 0
+		self.boost_boost_timer = 0
 		self.game_over = False
 
 	def run(self):
@@ -89,7 +118,6 @@ class Game:
 					pygame.quit()
 					sys.exit()
 
-			# Gestion du boost
 			max_boost_offset = 60
 			boost_up_speed = 4
 			boost_down_speed = 3
@@ -119,17 +147,28 @@ class Game:
 					self.spawn_obstacle()
 					self.obstacle_timer = 0
 
+				time_based_speed = self.score / 80  # la vitesse augmente vite
+				base_speed = self.obstacle_base_speed + time_based_speed
+
+				if self.boost_boost_timer > 0:
+					self.boost_boost_timer -= 1
+					base_speed += 8
+
 				if boosting:
-					self.global_vertical_speed = self.obstacle_base_speed + self.score // 120 + self.vehicule.boost()
+					self.global_vertical_speed = base_speed + self.vehicule.boost()
 				else:
-					self.global_vertical_speed = self.obstacle_base_speed + self.score // 120
+					self.global_vertical_speed = base_speed
 
 				for obs in self.obstacles:
 					obs.update(self.global_vertical_speed)
 
-				car_rect = pygame.Rect(self.car_x, self.car_y, self.car_width, self.car_height)
+				car_rect = pygame.Rect(self.car_x, self.car_y - self.boost_offset, self.car_width, self.car_height)
+
 				for obs in self.obstacles:
 					if isinstance(obs, BarrierePolice) and boosting:
+						continue
+					if isinstance(obs, Boost) and car_rect.colliderect(obs.rect):
+						self.boost_boost_timer = 60
 						continue
 					if car_rect.colliderect(obs.rect):
 						self.game_over = True
@@ -140,7 +179,11 @@ class Game:
 			self.screen.fill(self.GREEN)
 			pygame.draw.rect(self.screen, self.GRAY, (self.road_x, 0, self.road_width, self.HEIGHT))
 
-			# Lignes blanches
+			side_line_width = 8
+			pygame.draw.rect(self.screen, self.WHITE, (self.road_x + 12, 0, side_line_width, self.HEIGHT))
+			pygame.draw.rect(self.screen, self.WHITE, (self.road_x + self.road_width - 12 - side_line_width, 0, side_line_width, self.HEIGHT))
+
+			# Synchronisation lignes blanches avec obstacles
 			if not self.game_over:
 				self.line_offset = (self.line_offset + self.global_vertical_speed) % 40
 			for i in range(-40, self.HEIGHT, 40):
@@ -155,23 +198,27 @@ class Game:
 			score_text = self.score_font.render(f"Score : {self.score}", True, (0, 0, 0))
 			self.screen.blit(score_text, (20, 70))
 
-			# Bouton Changer Véhicule
+			highscore_text = self.score_font.render(f"Highscore : {self.highscore}", True, (0, 0, 0))
+			self.screen.blit(highscore_text, (20, 100))
+
 			change_rect = pygame.Rect(self.WIDTH - 200, 20, 180, 40)
 			pygame.draw.rect(self.screen, self.BLUE, change_rect)
 			change_text = self.button_font.render("Changer véhicule", True, self.WHITE)
 			self.screen.blit(change_text, change_text.get_rect(center=change_rect.center))
 
-			# Bouton Menu
 			menu_rect = pygame.Rect(20, 20, 120, 40)
 			pygame.draw.rect(self.screen, self.DARK_GRAY, menu_rect)
 			menu_text = self.button_font.render("Menu", True, self.WHITE)
 			self.screen.blit(menu_text, menu_text.get_rect(center=menu_rect.center))
 
-			# Nom du véhicule
 			name_text = self.button_font.render(f"Véhicule : {self.vehicule_names[self.vehicule_index]}", True, (0, 0, 0))
-			self.screen.blit(name_text, (20, 130))
+			self.screen.blit(name_text, (20, 150))
 
 			if self.game_over:
+				if self.score > self.highscore:
+					self.highscore = self.score
+					self.save_highscore()
+
 				text = self.font.render("Game Over!", True, (255, 0, 0))
 				text_rect = text.get_rect(center=(self.WIDTH // 2, self.HEIGHT // 2 - 40))
 				self.screen.blit(text, text_rect)
