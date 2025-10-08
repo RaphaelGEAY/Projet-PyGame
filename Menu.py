@@ -1,95 +1,93 @@
 import pygame, sys
-import Game
+import Jeu
 
 pygame.init()
 
-WIDTH, HEIGHT = 1200, 700
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Speed Run Menu")
+LARGEUR, HAUTEUR = 1200, 700
+ecran = pygame.display.set_mode((LARGEUR, HAUTEUR))
+pygame.display.set_caption("Speed Run - Menu Principal")
 
-background = pygame.image.load("Menus/Fond_menu.png")
-background = pygame.transform.scale(background, (WIDTH, HEIGHT))
-shop_background = pygame.image.load("Menus/Shop_menu.png")
-shop_background = pygame.transform.scale(shop_background, (WIDTH, HEIGHT))
+fond_menu = pygame.image.load("Menus/Fond_menu.png")
+fond_menu = pygame.transform.scale(fond_menu, (LARGEUR, HAUTEUR))
+fond_boutique = pygame.image.load("Menus/Shop_menu.png")
+fond_boutique = pygame.transform.scale(fond_boutique, (LARGEUR, HAUTEUR))
 
-title_image = pygame.image.load("Menus/SPEED_RUN.png")
-title_rect = title_image.get_rect(center=(WIDTH / 2, 70))
+titre_image = pygame.image.load("Menus/SPEED_RUN.png")
+rect_titre = titre_image.get_rect(center=(LARGEUR / 2, 70))
 
-start_img = pygame.image.load("Menus/START.png").convert_alpha()
-shop_img = pygame.image.load("Menus/Shop.png").convert_alpha()
-quit_img = pygame.image.load("Menus/QUIT.png").convert_alpha()
-settings_img = pygame.image.load("Menus/Settings.png").convert_alpha()
+img_jouer = pygame.image.load("Menus/START.png").convert_alpha()
+img_boutique = pygame.image.load("Menus/Shop.png").convert_alpha()
+img_quitter = pygame.image.load("Menus/QUIT.png").convert_alpha()
+img_options = pygame.image.load("Menus/Settings.png").convert_alpha()
 
-start_size = (260, 190)
-quit_size = (260, 200)
-shop_size = (270, 250)
-settings_size = (180, 180)
+taille_jouer = (260, 190)
+taille_quitter = (260, 200)
+taille_boutique = (270, 250)
+taille_options = (180, 180)
 
-start_img = pygame.transform.scale(start_img, start_size)
-quit_img = pygame.transform.scale(quit_img, quit_size)
-shop_img = pygame.transform.scale(shop_img, shop_size)
-settings_img = pygame.transform.scale(settings_img, settings_size)
+img_jouer = pygame.transform.scale(img_jouer, taille_jouer)
+img_quitter = pygame.transform.scale(img_quitter, taille_quitter)
+img_boutique = pygame.transform.scale(img_boutique, taille_boutique)
+img_options = pygame.transform.scale(img_options, taille_options)
 
-start_rect = start_img.get_rect(center=(WIDTH // 2, 250))
-shop_rect = shop_img.get_rect(center=(WIDTH // 2, 405))
-quit_rect = quit_img.get_rect(center=(WIDTH // 2, 560))
-settings_rect = settings_img.get_rect(center=(WIDTH - 120, 500))
+rect_jouer = img_jouer.get_rect(center=(LARGEUR // 2, 250))
+rect_boutique = img_boutique.get_rect(center=(LARGEUR // 2, 405))
+rect_quitter = img_quitter.get_rect(center=(LARGEUR // 2, 560))
+rect_options = img_options.get_rect(center=(LARGEUR - 120, 500))
 
-font = pygame.font.Font(None, 100)
-
-def draw_pop_button(image, base_size, rect, scale_factor=1.2, action=None):
-	mouse = pygame.mouse.get_pos()
-	click = pygame.mouse.get_pressed()
-	if rect.collidepoint(mouse):
-		new_size = (int(base_size[0] * scale_factor), int(base_size[1] * scale_factor))
-		scaled_img = pygame.transform.scale(image, new_size)
-		new_rect = scaled_img.get_rect(center=rect.center)
-		screen.blit(scaled_img, new_rect)
-		if click[0] == 1 and action is not None:
+def dessiner_bouton_pop(image, taille_base, rect, facteur=1.2, action=None):
+	souris = pygame.mouse.get_pos()
+	clic = pygame.mouse.get_pressed()
+	if rect.collidepoint(souris):
+		nouvelle_taille = (int(taille_base[0] * facteur), int(taille_base[1] * facteur))
+		image_redim = pygame.transform.scale(image, nouvelle_taille)
+		nouveau_rect = image_redim.get_rect(center=rect.center)
+		ecran.blit(image_redim, nouveau_rect)
+		if clic[0] == 1 and action is not None:
 			pygame.time.wait(150)
 			action()
 	else:
-		screen.blit(image, rect)
+		ecran.blit(image, rect)
 
-def quit_game():
+def quitter_jeu():
 	pygame.quit()
 	sys.exit()
 
-def shop_menu():
+def menu_boutique():
 	while True:
-		screen.blit(shop_background, (0, 0))
-		back_font = pygame.font.Font(None, 60)
-		back_text = back_font.render("Back", True, (255, 255, 255))
-		back_rect = back_text.get_rect(center=(100, 50))
-		screen.blit(back_text, back_rect)
+		ecran.blit(fond_boutique, (0, 0))
+		police_retour = pygame.font.Font(None, 60)
+		texte_retour = police_retour.render("Retour", True, (255, 255, 255))
+		rect_retour = texte_retour.get_rect(center=(100, 50))
+		ecran.blit(texte_retour, rect_retour)
 
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
-				quit_game()
+				quitter_jeu()
 			elif event.type == pygame.MOUSEBUTTONDOWN:
-				if back_rect.collidepoint(event.pos):
+				if rect_retour.collidepoint(event.pos):
 					return
 		pygame.display.update()
 
-def settings_game():
-	print("Settings menu (à compléter)")
+def menu_options():
+	print("Menu des options (à compléter)")
 
-def start_game():
-	Game.run_game()
+def lancer_jeu():
+	Jeu.lancer_jeu(retour_menu=menu_principal)
 
-def main_menu():
+def menu_principal():
 	while True:
-		screen.blit(background, (0, 0))
-		screen.blit(title_image, title_rect)
-		draw_pop_button(start_img, start_size, start_rect, 1.2, start_game)
-		draw_pop_button(shop_img, shop_size, shop_rect, 1.2, shop_menu)
-		draw_pop_button(quit_img, quit_size, quit_rect, 1.2, quit_game)
-		draw_pop_button(settings_img, settings_size, settings_rect, 1.2, settings_game)
+		ecran.blit(fond_menu, (0, 0))
+		ecran.blit(titre_image, rect_titre)
+		dessiner_bouton_pop(img_jouer, taille_jouer, rect_jouer, 1.2, lancer_jeu)
+		dessiner_bouton_pop(img_boutique, taille_boutique, rect_boutique, 1.2, menu_boutique)
+		dessiner_bouton_pop(img_quitter, taille_quitter, rect_quitter, 1.2, quitter_jeu)
+		dessiner_bouton_pop(img_options, taille_options, rect_options, 1.2, menu_options)
 
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
-				quit_game()
+				quitter_jeu()
 
 		pygame.display.update()
 
-main_menu()
+menu_principal()
