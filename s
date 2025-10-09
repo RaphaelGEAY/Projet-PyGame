@@ -1,0 +1,14 @@
+* [32mGabr[m
+  Menu[m
+  develop[m
+  feature/ui-menu[m
+  features/gameplay-movement[m
+  [31mremotes/origin/HEAD[m -> origin/main
+  [31mremotes/origin/Menu[m
+  [31mremotes/origin/Raphael[m
+  [31mremotes/origin/develop[m
+  [31mremotes/origin/feature/asset[m
+  [31mremotes/origin/feature/gameplay-movement[m
+  [31mremotes/origin/feature/ui-menu[m
+  [31mremotes/origin/features/gameplay-movement[m
+  [31mremotes/origin/main[m
