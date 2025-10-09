@@ -315,7 +315,7 @@ class Jeu:
             # UI
             # --- UI : panneaux gauche & droite (PLACER ICI : juste avant pygame.display.flip()) ---
             left_panel_width = 260
-            panel_bg_color = (0, 0, 0, 200)  # semi-transparent
+            panel_bg_color = (0, 0, 0, 0)  # semi-transparent
 
             # panneau gauche
             left_panel = pygame.Surface((left_panel_width, self.hauteur), pygame.SRCALPHA)
@@ -380,7 +380,7 @@ class Jeu:
             if self.partie_terminee:
                 if self.score > self.gestion_score.meilleur_score:
                     self.gestion_score.mettre_a_jour(self.score)
-                txt = self.police.render("Game Over!", True, (255, 0, 0))
+                txt = self.police.render("Game Over !", True, (255, 0, 0))
                 rect_txt = txt.get_rect(center=(self.largeur // 2, self.hauteur // 2 - 40))
                 self.ecran.blit(txt, rect_txt)
 
