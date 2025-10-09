@@ -4,15 +4,15 @@ if not pygame.mixer.get_init():
     pygame.mixer.init()
 
 def play_menu_music():
-    pygame.mixer.music.load(r"C:\Users\rodne\Documents\Projet-PyGame\assets\Sound\Soundprincipal\Musique Salon.wav")
+    pygame.mixer.music.load(r"assets\Sound\Soundprincipal\Musique Salon.wav")
     pygame.mixer.music.play(-1)
 
 def play_game_music():
-    pygame.mixer.music.load(r"C:\Users\rodne\Documents\Projet-PyGame\assets\Sound\Soundprincipal\Musique Combat.wav")
+    pygame.mixer.music.load(r"assets\Sound\Soundprincipal\Musique Combat.wav")
     pygame.mixer.music.play(-1)
 
 def Shop_Game_music():
-    pygame.mixer.music.load(r"C:\Users\rodne\Documents\Projet-PyGame\assets\Sound\Soundprincipal\Musique Game.wav")
+    pygame.mixer.music.load(r"assets\Sound\Soundprincipal\Musique Game.wav")
     pygame.mixer.music.play(-1)
 
 def stop_menu_music():
