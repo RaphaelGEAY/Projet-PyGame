@@ -22,9 +22,9 @@ img_boutique = pygame.image.load("Menus/Shop.png").convert_alpha()
 img_quitter = pygame.image.load("Menus/QUIT.png").convert_alpha()
 img_options = pygame.image.load("Menus/Settings.png").convert_alpha()
 
-taille_jouer = (260, 190)
-taille_quitter = (260, 200)
-taille_boutique = (270, 250)
+taille_jouer = (260, 140)
+taille_quitter = (230, 120)
+taille_boutique = (265, 130)
 taille_options = (180, 180)
 
 img_jouer = pygame.transform.scale(img_jouer, taille_jouer)
