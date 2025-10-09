@@ -1,5 +1,5 @@
 from Decors.Decor import Decor
 
 class Desert(Decor):
-	def __init__(self):
-		super().__init__((237, 201, 175))
+    def __init__(self):
+        super().__init__("Desert.png")
