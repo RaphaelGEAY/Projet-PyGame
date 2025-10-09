@@ -156,8 +156,14 @@ class Jeu:
 			self.route.dessiner(self.ecran, self.vitesse_globale, self.partie_terminee)
 			self.gestion_obstacles.dessiner(self.ecran)
 
-			voiture_y_boost = self.voiture_y - self.decalage_boost
-			pygame.draw.rect(self.ecran, (200, 0, 0), (self.voiture_x, voiture_y_boost, self.voiture_largeur, self.voiture_hauteur))
+			for obs in self.gestion_obstacles.liste:
+				if isinstance(obs, Boost):
+					self.ecran.blit(obs.image, obs.rect)
+				else:
+					# Affichage des autres obstacles
+					pass
+
+			self.ecran.blit(self.vehicule.image, (self.voiture_x, self.voiture_y))
 
 			score_txt = self.police_score.render(f"Score : {self.score}", True, (0, 0, 0))
 			self.ecran.blit(score_txt, (20, 70))
