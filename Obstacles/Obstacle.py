@@ -1,12 +1,12 @@
 import pygame
 
 class Obstacle:
-	def __init__(self, x, y, width, height, color):
-		self.rect = pygame.Rect(x, y, width, height)
-		self.color = color
+	def __init__(self, x, y, largeur, hauteur, couleur):
+		self.rect = pygame.Rect(x, y, largeur, hauteur)
+		self.couleur = couleur
 
-	def draw(self, screen):
-		pygame.draw.rect(screen, self.color, self.rect)
-
-	def update(self, speed):
-		self.rect.y += speed
+	def draw(self, ecran):
+		pygame.draw.rect(ecran, self.couleur, self.rect)
+		
+	def update(self, vitesse):
+		self.rect.y += vitesse
