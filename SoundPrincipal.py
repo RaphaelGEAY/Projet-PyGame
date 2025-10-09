@@ -20,9 +20,9 @@ def stop_menu_music():
 
 def play_crash_sound():
     pygame.mixer.music.stop()  # Arrête la musique en cours
-    crash_sound = pygame.mixer.Sound(r"C:\Users\rodne\Documents\Projet-PyGame\assets\Sound\Sound effect\car-crash-sound.mp3")
+    crash_sound = pygame.mixer.Sound(r"assets\Sound\Sound effect\car-crash-sound.mp3")
     crash_sound.play()
 
 def play_boing_sound():
-    boing = pygame.mixer.Sound(r"C:\Users\rodne\Documents\Projet-PyGame\assets\Sound\Sound effect\boing.mp3")
+    boing = pygame.mixer.Sound(r"assets\Sound\Sound effect\boing.mp3")
     boing.play()
