@@ -223,7 +223,7 @@ class Jeu:
 
                 if self.timer_boost_pad > 0:
                     self.timer_boost_pad -= 1
-                    vitesse_base += 6
+                    vitesse_base += 12
 
                 # récupération boost du véhicule (méthode ou attribut)
                 boost_val = 0
@@ -313,24 +313,68 @@ class Jeu:
                 pygame.draw.rect(self.ecran, (200, 0, 0), (self.voiture_x, voiture_y_aff, self.voiture_largeur, self.voiture_hauteur))
 
             # UI
-            score_txt = self.police_score.render(f"Score : {self.score}", True, (0, 0, 0))
-            self.ecran.blit(score_txt, (20, 70))
-            high_txt = self.police_score.render(f"Record : {self.gestion_score.meilleur_score}", True, (0, 0, 0))
-            self.ecran.blit(high_txt, (20, 100))
+            # --- UI : panneaux gauche & droite (PLACER ICI : juste avant pygame.display.flip()) ---
+            left_panel_width = 260
+            panel_bg_color = (0, 0, 0, 200)  # semi-transparent
 
-            # boutons
-            changer_rect = pygame.Rect(self.largeur - 200, 20, 180, 40)
-            pygame.draw.rect(self.ecran, self.bleu, changer_rect)
-            txt_change = self.police_bouton.render("Changer véhicule", True, self.blanc)
-            self.ecran.blit(txt_change, txt_change.get_rect(center=changer_rect.center))
+            # panneau gauche
+            left_panel = pygame.Surface((left_panel_width, self.hauteur), pygame.SRCALPHA)
+            left_panel.fill(panel_bg_color)
+            self.ecran.blit(left_panel, (0, 0))
 
-            menu_rect = pygame.Rect(20, 20, 120, 40)
-            pygame.draw.rect(self.ecran, self.gris_fonce, menu_rect)
-            txt_menu = self.police_bouton.render("Menu", True, self.blanc)
+            # helper : texte avec outline (pour lisibilité)
+            def draw_text_outline(surface, font, text, fg_color, outline_color, pos):
+                ox, oy = pos
+                outline_surf = font.render(text, True, outline_color)
+                fg_surf = font.render(text, True, fg_color)
+                # 4 directions pour l'outline
+                for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                    surface.blit(outline_surf, (ox + dx, oy + dy))
+                surface.blit(fg_surf, pos)
+
+            # gauche : infos
+            draw_text_outline(self.ecran, self.police_score, f"Score : {self.score}", (255, 255, 255), (0, 0, 0), (12, 18))
+            draw_text_outline(self.ecran, self.police_score, f"Record : {self.gestion_score.meilleur_score}", (255, 255, 255), (0, 0, 0), (12, 56))
+            draw_text_outline(self.ecran, self.police_score, f"Véhicule : {self.noms_vehicules[self.index_vehicule]}", (255, 255, 255), (0, 0, 0), (12, 96))
+
+            # récupère un nom de décor sûr (évite AttributeError si .nom n'existe pas)
+            decor_name = "Aucun"
+            if getattr(self, "decor_actuel", None):
+                decor_name = getattr(self.decor_actuel, "nom", None) or self.decor_actuel.__class__.__name__
+            draw_text_outline(self.ecran, self.police_score, f"Décor : {decor_name}", (255, 255, 255), (0, 0, 0), (12, 136))
+
+            # explication / tutoriel court
+            instructions = [
+                "",
+                "TAB : changer véhicule",
+                "UP : booster (maintenir)",
+                "",
+                "Maintenir Booster",
+                "quand il y a une",
+                "herse bleue !"
+            ]
+            y_off = 176
+            for ligne in instructions:
+                draw_text_outline(self.ecran, self.police_bouton, ligne, (255, 255, 255), (0, 0, 0), (12, y_off))
+                y_off += 26
+
+            # panneau droite
+            right_w = 240
+            right_x = self.largeur - right_w
+            right_panel = pygame.Surface((right_w, self.hauteur), pygame.SRCALPHA)
+            right_panel.fill(panel_bg_color)
+            self.ecran.blit(right_panel, (right_x, 0))
+
+            # boutons et infos à droite (coordonnées calculées pour être dans le panneau)
+            menu_rect = pygame.Rect(right_x + 20, 20, 200, 42)
+            pygame.draw.rect(self.ecran, self.gris_fonce, menu_rect, border_radius=6)
+            txt_menu = self.police_bouton.render("Menu", True, (255, 255, 255))
             self.ecran.blit(txt_menu, txt_menu.get_rect(center=menu_rect.center))
 
-            txt_nom = self.police_bouton.render(f"Véhicule : {self.noms_vehicules[self.index_vehicule]}", True, (0, 0, 0))
-            self.ecran.blit(txt_nom, (20, 150))
+            changer_rect = pygame.Rect(right_x + 20, 76, 200, 42)
+            pygame.draw.rect(self.ecran, self.bleu, changer_rect, border_radius=6)
+            txt_change = self.police_bouton.render("Changer véhicule", True, (255, 255, 255))
+            self.ecran.blit(txt_change, txt_change.get_rect(center=changer_rect.center))
 
             # Game Over
             if self.partie_terminee:
