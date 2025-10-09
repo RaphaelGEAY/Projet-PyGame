@@ -14,6 +14,7 @@ from Decors.Desert import Desert
 from Decors.Neige import Neige
 from Decors.Volcan import Volcan
 from Decors.Galaxie import Galaxie
+from SoundPrincipal import play_crash_sound, play_game_music
 
 class Jeu:
 	def __init__(self, retour_menu=None):
@@ -67,6 +68,7 @@ class Jeu:
 		self.vitesse_globale = self.vitesse_base_obstacles
 		self.index_decor = 0
 		self.decor_actuel = self.decors[self.index_decor]
+		play_game_music()  # <-- Ajout ici
 
 	def boucle(self):
 		while True:
@@ -138,6 +140,7 @@ class Jeu:
 						continue
 					if rect_voiture.colliderect(obs.rect):
 						self.partie_terminee = True
+						play_crash_sound()  # <-- Ajout ici
 
 				self.gestion_obstacles.nettoyer(self.hauteur)
 				self.score += 1
