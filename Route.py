@@ -16,7 +16,7 @@ class Route:
 			jeu.voiture_x = self.x_route + self.largeur_route - jeu.voiture_largeur
 
 	def dessiner(self, ecran, vitesse, partie_terminee=False):
-		pygame.draw.rect(ecran, (120, 120, 120), (self.x_route, 0, self.largeur_route, self.hauteur))
+		pygame.draw.rect(ecran, (180, 180, 180), (self.x_route, 0, self.largeur_route, self.hauteur))
 		pygame.draw.rect(ecran, (255, 255, 255), (self.x_route + 12, 0, self.cote, self.hauteur))
 		pygame.draw.rect(ecran, (255, 255, 255), (self.x_route + self.largeur_route - 12 - self.cote, 0, self.cote, self.hauteur))
 
